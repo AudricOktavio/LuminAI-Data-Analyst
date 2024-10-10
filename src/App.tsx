@@ -1,11 +1,11 @@
 // import { useState } from 'react'
 // import reactLogo from './assets/react.svg'
 // import viteLogo from '/vite.svg'
-import './App.css'
+import Chat from './pages/chat';
 
 const App = () => {
   console.log("App component rendered");
-  return <div>Hello, World!</div>;
+  return <Chat/>;
 };
 
 
