@@ -1,7 +1,7 @@
+from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
-from langchain_openai import OpenAI
-from langchain_ollama.llms import OllamaLLM
-from app.config.env import (GROQ_API_KEY, OPENAI_API_KEY)
+from langchain_ollama import ChatOllama
+from app.config.env import GROQ_API_KEY, OPENAI_API_KEY
 
 
 class LLM:
@@ -9,18 +9,18 @@ class LLM:
         self.llm = None
         self.platform = None
 
-    def groq(self, model: str):
-        self.llm = ChatGroq(groq_api_key=GROQ_API_KEY, model=model)
+    def groq(self, model: str = "mixtral-8x7b-32768"):
+        self.llm = ChatGroq(api_key=GROQ_API_KEY, model=model)
         self.platform = "Groq"
         return self.llm
 
-    def openai(self, model: str):
-        self.llm = OpenAI(api_key=OPENAI_API_KEY, model=model)
-        self.platform = "OpenAi"
+    def openai(self, model: str = "gpt-3.5-turbo"):
+        self.llm = ChatOpenAI(api_key=OPENAI_API_KEY, model=model)
+        self.platform = "OpenAI"
         return self.llm
 
-    def ollama(self, model: str):
-        self.llm = OllamaLLM(model=model)
+    def ollama(self, model: str = "llama2"):
+        self.llm = ChatOllama(model=model)
         self.platform = "Ollama"
         return self.llm
 

@@ -56,6 +56,10 @@ class OutputState(TypedDict):
     visualization_reason: Annotated[str, operator.add]
     formatted_data_for_visualization: Dict[str, Any]
 
+class WorkflowState(InputState, OutputState, total=False):
+    """Combined state for the workflow."""
+    pass
+
 
 class WorkflowManager:
     def __init__(self, llm: BaseLLM, db: DB):
@@ -109,42 +113,32 @@ class WorkflowManager:
 
     def create_workflow(self) -> StateGraph:
         """Create and configure the workflow graph."""
-        workflow = StateGraph(input=InputState, output=OutputState)
+        workflow = StateGraph(
+            state_schema=WorkflowState,
+            input_schema=InputState,
+            output_schema=OutputState
+        )
 
         # Add nodes to the graph
         workflow.add_node("parse_question", self.sql_agent.get_parse_question)
         workflow.add_node("generate_sql", self.sql_agent.generate_sql_query)
-        workflow.add_node("validate_and_fix_sql",
-                          self.sql_agent.validate_and_fix_sql)
+        workflow.add_node("validate_and_fix_sql", self.sql_agent.validate_and_fix_sql)
         workflow.add_node("execute_sql", self.run_sql_query)
         workflow.add_node("format_results", self.sql_agent.format_results)
-        workflow.add_node("choose_visualization",
-                          self.sql_agent.choose_visualization)
-        workflow.add_node("format_data_for_visualization",
-                          self.sql_agent.format_visualization_data)
-
-        # Add a node for conversational LLM response if the question is irrelevant
-        workflow.add_node("conversational_response",
-                          self.sql_agent.conversational_response)
+        workflow.add_node("choose_visualization", self.sql_agent.choose_visualization)
+        workflow.add_node("format_data_for_visualization", self.sql_agent.format_visualization_data)
+        workflow.add_node("conversational_response", self.sql_agent.conversational_response)
 
         # Define edges
         workflow.add_edge(START, "parse_question")
-
-        # Add conditional edge to check if the conversation should continue or end
-        workflow.add_conditional_edges(
-            "parse_question",  # Start after parsing question
-            self.should_continue  # Conditional function to determine the next node
-        )
-
+        workflow.add_conditional_edges("parse_question", self.should_continue)
         workflow.add_edge("generate_sql", "validate_and_fix_sql")
         workflow.add_edge("validate_and_fix_sql", "execute_sql")
         workflow.add_edge("execute_sql", "format_results")
         workflow.add_edge("execute_sql", "choose_visualization")
-        workflow.add_edge("choose_visualization",
-                          "format_data_for_visualization")
+        workflow.add_edge("choose_visualization", "format_data_for_visualization")
         workflow.add_edge("format_data_for_visualization", END)
         workflow.add_edge("format_results", END)
-        # End the workflow after conversational response
         workflow.add_edge("conversational_response", END)
 
         return workflow
