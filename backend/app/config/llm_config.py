@@ -10,8 +10,8 @@ class LLM:
         self.platform = None
 
     def groq(self, model: str = "mixtral-8x7b-32768"):
-        self.llm = ChatGroq(api_key=GROQ_API_KEY, model=model)
-        self.platform = "Groq"
+        self.llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-4o")
+        self.platform = "OpenAI"
         return self.llm
 
     def openai(self, model: str = "gpt-3.5-turbo"):
